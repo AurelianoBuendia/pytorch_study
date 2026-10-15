@@ -5,31 +5,42 @@ import torch
 from torch import nn
 import torch.nn.functional as F
 from torch.utils.data import Dataset, DataLoader
-from torchvision import datasets, transforms
+from torchvision import datasets, transforms, models
 
+# !git clone https://github.com/AurelianoBuendia/ants_and_bees.git
 
-device = 'cuda:0' if torch.cuda.is_available() else 'cpu'
+device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
 transform_train = transforms.Compose([
-    transforms.Resize((32, 32)),
+    transforms.Resize((224, 224)), # Resize images to 224x224 pixels, which is the input size expected by
+                                   # many pre-trained models like ResNet and VGG.
     transforms.RandomHorizontalFlip(),
-    transforms.RandomRotation(10),
+    # transforms.RandomRotation(10), # Randomly rotate the image by up to 10 degrees. This can help the model learn
+                                     # to be invariant to small rotations in the input images, which can be useful
+                                     # for tasks like image classification. This line is commented out because it
+                                     # was found by experiments to hurt performance in this case.
     transforms.RandomAffine(0, shear=10, scale=(0.8, 1.2)),
-    transforms.ColorJitter(brightness=0.2, contrast=0.2, saturation=0.2),
+    transforms.ColorJitter(brightness=1, contrast=1, saturation=1), # In this case, the brightness, contrast,
+                                                                    # and saturation are all set to 1, which means that
+                                                                    # the images will be randomly adjusted within a
+                                                                    # range of ±100% of their original values. This can
+                                                                    # help the model learn to be more robust to
+                                                                    # variations in lighting and color conditions.
+                                                                    # These values performed better in experiments.
     transforms.ToTensor(),
     transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
 ])
 
 transform = transforms.Compose([
-    transforms.Resize((32, 32)),
+    transforms.Resize((224, 224)),
     transforms.ToTensor(),
     transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)) # Normalizes image to range [-1, 1],
                                                                      # using x - mu / sigma, where mu = 0.5
                                                                      # and sigma = 0.5
 ])
 
-training_dataset = datasets.CIFAR10(root='./datasets', train=True, download=False, transform=transform_train)
-validation_dataset = datasets.CIFAR10(root='./datasets', train=False, download=False, transform=transform)
+training_dataset = datasets.ImageFolder(root='./ants_and_bees/train', transform=transform_train)
+validation_dataset = datasets.ImageFolder(root='./ants_and_bees/val', transform=transform)
 
 def im_convert(tensor):
     # Convert a tensor to a numpy image for visualization
@@ -115,13 +126,13 @@ def train(model, device, optimizer, criterion, train_loader, validation_loader, 
                 val_running_loss += val_loss.item()
                 val_running_corrects += torch.sum(val_preds == val_labels.data)
 
-        epoch_loss = running_loss / len(train_loader)
-        epoch_acc = running_corrects / len(train_loader)
+        epoch_loss = running_loss / len(train_loader.dataset)
+        epoch_acc = running_corrects / len(train_loader.dataset)
         running_loss_history.append(epoch_loss)
         running_corrects_history.append(epoch_acc)
 
-        val_epoch_loss = val_running_loss / len(validation_loader)
-        val_epoch_acc = val_running_corrects / len(validation_loader)
+        val_epoch_loss = val_running_loss / len(validation_loader.dataset)
+        val_epoch_acc = val_running_corrects / len(validation_loader.dataset)
         val_running_loss_history.append(val_epoch_loss)
         val_running_corrects_history.append(val_epoch_acc)
 
@@ -155,14 +166,23 @@ def test(model, device, test_loader, classes, n_images=20):
 
 
 if __name__ == "__main__":
-    training_loader = DataLoader(training_dataset, batch_size=100, shuffle=True)
-    validation_loader = DataLoader(validation_dataset, batch_size=100, shuffle=False)
+    training_loader = DataLoader(training_dataset, batch_size=20, shuffle=True)
+    validation_loader = DataLoader(validation_dataset, batch_size=20, shuffle=False)
     show_images(training_loader, num_images=20)
-    model = LeNet().to(device)
+    classes = ['ant', 'bee']
+    model = models.vgg16(pretrained=True)
+    print(model)
+    for param in model.parameters():
+        param.requires_grad = False
+    n_inputs = model.classifier[6].in_features
+    last_layer = nn.Linear(n_inputs, len(classes))
+    model.classifier[6] = last_layer
+    model.to(device)
+    print(model.classifier[6].out_features)
+
     criterion = nn.CrossEntropyLoss()
     optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
-    n_epochs = 20
-    train(model, device, optimizer, criterion, training_loader, validation_loader, n_epochs)
-    classes = ['plane', 'car', 'bird', 'cat', 'deer', 'dog', 'frog', 'horse', 'ship', 'truck']
-    test(model, device, validation_loader, classes, n_images=20)
 
+    n_epochs = 10
+    train(model, device, optimizer, criterion, training_loader, validation_loader, n_epochs)
+    test(model, device, validation_loader, classes, n_images=20)
