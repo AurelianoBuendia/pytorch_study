@@ -1,13 +1,14 @@
 
-import numpy as np
 import matplotlib.pyplot as plt
 import torch
 from torch import nn
-import torch.nn.functional as F
-from torch.utils.data import Dataset, DataLoader
+from torch.utils.data import DataLoader
 from torchvision import datasets, transforms, models
 
+from utils import im_convert
+
 # !git clone https://github.com/AurelianoBuendia/ants_and_bees.git
+
 
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
@@ -15,10 +16,10 @@ transform_train = transforms.Compose([
     transforms.Resize((224, 224)), # Resize images to 224x224 pixels, which is the input size expected by
                                    # many pre-trained models like ResNet and VGG.
     transforms.RandomHorizontalFlip(),
-    # transforms.RandomRotation(10), # Randomly rotate the image by up to 10 degrees. This can help the model learn
-                                     # to be invariant to small rotations in the input images, which can be useful
-                                     # for tasks like image classification. This line is commented out because it
-                                     # was found by experiments to hurt performance in this case.
+    transforms.RandomRotation(10), # Randomly rotate the image by up to 10 degrees. This can help the model learn
+                                   # to be invariant to small rotations in the input images, which can be useful
+                                   # for tasks like image classification. comment it out if you verify that
+                                   # it hurts performance.
     transforms.RandomAffine(0, shear=10, scale=(0.8, 1.2)),
     transforms.ColorJitter(brightness=1, contrast=1, saturation=1), # In this case, the brightness, contrast,
                                                                     # and saturation are all set to 1, which means that
@@ -42,18 +43,6 @@ transform = transforms.Compose([
 training_dataset = datasets.ImageFolder(root='./ants_and_bees/train', transform=transform_train)
 validation_dataset = datasets.ImageFolder(root='./ants_and_bees/val', transform=transform)
 
-def im_convert(tensor):
-    # Convert a tensor to a numpy image for visualization
-    # Note that the input tensor is expected to be in the range [-1, 1] due to normalization
-    # The function will convert it back to the range [0, 1] for display purposes.
-    # The input tensor is expected to have shape (C, H, W) and will be converted to (H, W, C).
-    # Also, the function will detach the tensor from the computation graph and move it to CPU if necessary,
-    # since NumPy does not support GPU tensors.
-    image = tensor.cpu().clone().detach().numpy()
-    image = image.transpose(1, 2, 0) # Convert from (C, H, W) to (H, W, C)
-    image = image * np.array((0.5, 0.5, 0.5)) + np.array((0.5, 0.5, 0.5)) # Unnormalize the image from [-1, 1] to [0, 1]
-    image = image.clip(0, 1) # Clip the values to be in the range [0, 1] to avoid any artifacts due to unnormalization
-    return image
 
 def show_images(data_loader, num_images=20):
     # Display a grid of images from the data loader
@@ -69,32 +58,6 @@ def show_images(data_loader, num_images=20):
         ax.imshow(img)
         ax.set_title(f"{labels[idx].item()}")
     plt.show()
-
-class LeNet(nn.Module):
-    def __init__(self, i_channels=3, n_classes=10):
-        super().__init__()
-        self.i_channels = i_channels
-        self.n_classes = n_classes
-        self.conv1 = nn.Conv2d(in_channels=i_channels, out_channels=16, kernel_size=3, stride=1, padding=1)
-        self.conv2 = nn.Conv2d(in_channels=16, out_channels=32, kernel_size=3, stride=1, padding=1)
-        self.conv3 = nn.Conv2d(in_channels=32, out_channels=64, kernel_size=3, stride=1, padding=1)
-        self.fc1 = nn.Linear(in_features=4 * 4 * 64, out_features=500)
-        self.fc2 = nn.Linear(in_features=500, out_features=n_classes)
-
-    def forward(self, x):
-        x = F.relu(self.conv1(x))
-        x = F.max_pool2d(x, 2, 2)
-        x = F.relu(self.conv2(x))
-        x = F.max_pool2d(x, 2, 2)
-        x = F.relu(self.conv3(x))
-        x = F.max_pool2d(x, 2, 2)
-        x = x.view(-1, 4 * 4 * 64)
-        x = F.relu(self.fc1(x))
-        x = F.dropout(x, p=0.5, training=self.training) # Apply dropout during training to prevent overfitting
-        x = self.fc2(x) # The final layer outputs raw scores (logits) for each class.
-                        # These logits can be passed through a softmax function to obtain probabilities
-                        # for each class if needed.
-        return x
 
 def train(model, device, optimizer, criterion, train_loader, validation_loader, n_epochs=20):
     model.train()

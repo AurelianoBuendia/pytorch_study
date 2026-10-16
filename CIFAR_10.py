@@ -1,11 +1,12 @@
 
-import numpy as np
 import matplotlib.pyplot as plt
 import torch
 from torch import nn
 import torch.nn.functional as F
-from torch.utils.data import Dataset, DataLoader
+from torch.utils.data import DataLoader
 from torchvision import datasets, transforms
+
+from utils import im_convert
 
 
 device = 'cuda:0' if torch.cuda.is_available() else 'cpu'
@@ -30,19 +31,6 @@ transform = transforms.Compose([
 
 training_dataset = datasets.CIFAR10(root='./datasets', train=True, download=False, transform=transform_train)
 validation_dataset = datasets.CIFAR10(root='./datasets', train=False, download=False, transform=transform)
-
-def im_convert(tensor):
-    # Convert a tensor to a numpy image for visualization
-    # Note that the input tensor is expected to be in the range [-1, 1] due to normalization
-    # The function will convert it back to the range [0, 1] for display purposes.
-    # The input tensor is expected to have shape (C, H, W) and will be converted to (H, W, C).
-    # Also, the function will detach the tensor from the computation graph and move it to CPU if necessary,
-    # since NumPy does not support GPU tensors.
-    image = tensor.cpu().clone().detach().numpy()
-    image = image.transpose(1, 2, 0) # Convert from (C, H, W) to (H, W, C)
-    image = image * np.array((0.5, 0.5, 0.5)) + np.array((0.5, 0.5, 0.5)) # Unnormalize the image from [-1, 1] to [0, 1]
-    image = image.clip(0, 1) # Clip the values to be in the range [0, 1] to avoid any artifacts due to unnormalization
-    return image
 
 def show_images(data_loader, num_images=20):
     # Display a grid of images from the data loader

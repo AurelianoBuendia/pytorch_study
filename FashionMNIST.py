@@ -3,12 +3,9 @@ import torch
 import torch.nn as nn
 import torchvision
 import torchvision.transforms.v2 as T
-from torch.utils.data import TensorDataset, DataLoader
+from torch.utils.data import DataLoader
 import torchmetrics
-import numpy as np
 import optuna
-import torch.nn.functional as F
-from functools import partial
 
 
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
