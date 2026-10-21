@@ -50,8 +50,9 @@ def train(model, device, optimizer, criterion, train_loader, n_epochs):
         mean_loss = total_loss / len(train_loader)
         print(f"Epoch {epoch + 1}/{n_epochs}; Loss: {mean_loss:.4f}")
 
-def train2(model, optimizer, criterion, metric, train_loader, valid_loader,
-               n_epochs):
+def train2(model, optimizer, criterion, metric,
+           train_loader, valid_loader,
+           n_epochs):
     history = {"train_losses": [], "train_metrics": [], "valid_metrics": []}
     for epoch in range(n_epochs):
         total_loss = 0.
