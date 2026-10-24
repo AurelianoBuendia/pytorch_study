@@ -66,8 +66,7 @@ pp.pprint(model.state_dict())
 torch.save(model.state_dict(), "./output/iris-model.pth")
 
 def load_model(model, path):
-    with open(path, "rb") as f:
-        model.load_state_dict(torch.load(f))
+    model.load_state_dict(torch.load(path))
     return model
 
 
