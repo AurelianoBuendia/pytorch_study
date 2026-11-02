@@ -148,7 +148,8 @@ if __name__ == "__main__":
     ax[0].plot(acc_hist, label="Accuracy")
     ax[0].set_xlabel("Epochs")
     ax[0].set_ylim(0, 1)
-    for n, grads in enumerate(grad_hist):  ax[1].plot(grads, label="layer" + str(n))
+    for n, grads in enumerate(grad_hist):
+        ax[1].plot(grads, label="layer" + str(n))
     ax[1].set_xlabel("Epochs")
     fig.suptitle(str(activation))
     ax[0].legend()
@@ -163,7 +164,8 @@ if __name__ == "__main__":
     ax[0].plot(acc_hist, label="Accuracy")
     ax[0].set_xlabel("Epochs")
     ax[0].set_ylim(0, 1)
-    for n, grads in enumerate(grad_hist):  ax[1].plot(grads, label="layer" + str(n))
+    for n, grads in enumerate(grad_hist):
+        ax[1].plot(grads, label="layer" + str(n))
     ax[1].set_xlabel("Epochs")
     fig.suptitle(str(activation))
     ax[0].legend()
