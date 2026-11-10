@@ -6,8 +6,6 @@ from torch.utils.data import DataLoader, TensorDataset, random_split, default_co
 from sklearn.datasets import fetch_openml
 from sklearn.preprocessing import LabelEncoder
 
-from save_model import batch_size
-
 
 def checkpoint(model, filename):
     """

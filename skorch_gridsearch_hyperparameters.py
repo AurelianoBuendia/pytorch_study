@@ -4,7 +4,7 @@ import torch.nn as nn
 import torch.optim as optim
 from skorch import NeuralNetClassifier
 from sklearn.model_selection import GridSearchCV
-from sklearn.preprocessing import LabelEncoder, StandardScaler
+from sklearn.preprocessing import LabelEncoder
 import pandas as pd
 
 

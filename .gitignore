@@ -7,8 +7,8 @@ __pycache__/
 *.so
 
 # Data
-# images/
-videos/
+images/open-images-bus-trucks/
+# videos/
 runs/
 datasets/
 
@@ -148,7 +148,9 @@ cython_debug/
 
 # Other project files
 *.log
+*.mp4
 *.csv
+*.jpg
 *.pbix
 logs/
 pbi/
