@@ -5,14 +5,14 @@ from pathlib import Path
 
 import cv2
 
-from .api import YOLO
+from api import YOLO
 
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("video", type=Path)
     parser.add_argument("output", type=Path)
-    parser.add_argument("--weights", type=Path, default=Path("models/yolo11n.pt"))
+    parser.add_argument("--weights", type=Path, default=Path("../models/yolo11n.pt"))
     parser.add_argument("--tracker", default="bytetrack.yaml")
     parser.add_argument("--imgsz", type=int, default=640)
     args = parser.parse_args()

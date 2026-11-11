@@ -6,9 +6,9 @@ import cv2
 import numpy as np
 import torch
 
-from .byte_tracker import BYTETracker, load_config
-from .inference import Boxes, _size, predict_image
-from .model import load_model
+from byte_tracker import BYTETracker, load_config
+from inference import Boxes, _size, predict_image
+from model import load_model
 
 _VIDEO_SUFFIXES = {".avi", ".m4v", ".mkv", ".mov", ".mp4", ".mpeg", ".mpg", ".webm"}
 
