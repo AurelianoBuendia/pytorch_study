@@ -3,8 +3,8 @@
 This directory is a work in progress, not a drop-in replacement for
 Ultralytics. It loads the bundled `models/yolo11n.pt` detection checkpoint,
 runs image detection, and exports raw predictions to ONNX without importing
-Ultralytics. Tracking and training are not implemented. Existing scripts such
-as `tracking.py` still depend on Ultralytics.
+Ultralytics. ByteTrack supports image sequences and local videos. Training is
+not implemented.
 
 ## Image detection and ONNX export
 
@@ -29,7 +29,7 @@ not supported. It uses a restricted unpickler but checkpoints are complex
 binary inputs: load only files from a trusted source. Unsupported checkpoint
 classes are rejected. No checkpoint is downloaded automatically.
 
-The supported image API is intentionally limited: videos, URLs, tensors, PIL
+The prediction API is intentionally limited: videos, URLs, tensors, PIL
 images, plotting, and most Ultralytics options are not implemented. Image sizes
 must be positive multiples of 32. Preprocessing uses fixed-size letterboxing,
 so results may differ from Ultralytics' default rectangular batching. The
@@ -38,6 +38,49 @@ exported ONNX input is a normalized RGB tensor in NCHW order; its output is
 height and class probabilities. It does not include image preprocessing or
 non-maximum suppression. Dynamic exports support different batch sizes and
 spatial sizes divisible by 32.
+
+## ByteTrack tracking
+
+Track a local video, writing an annotated MP4:
+
+```sh
+python -m yolo11.track_video input.mp4 output.mp4 \
+  --weights models/yolo11n.pt --tracker bytetrack.yaml
+```
+
+Or consume results in Python:
+
+```python
+from yolo11 import YOLO
+
+model = YOLO("models/yolo11n.pt")
+for result in model.track("input.mp4", tracker="bytetrack.yaml", stream=True):
+    for box in result.boxes:
+        print(int(box.id[0]), int(box.cls[0]), float(box.conf[0]), box.xyxy[0])
+```
+
+`track` accepts a video path, image path, BGR NumPy frame, or list of image
+paths/frames. Streaming video is decoded one frame at a time; close the
+generator if iteration stops early. Results contain confirmed tracks only,
+including an empty `(0, 7)` boxes tensor on frames without confirmed tracks.
+Each tracked box is `[x1, y1, x2, y2, track_id, confidence, class]`.
+
+The bundled `bytetrack.yaml` is used when that name is given and no matching
+file exists in the working directory. Supply a path to use a custom YAML
+configuration. The default detection confidence is the smaller of 0.1 and
+`track_low_thresh` so that low-confidence detections reach the tracker; an
+explicit `conf` can override it. The tracker performs high/low score
+association, Kalman prediction, lost-track reactivation and buffered expiry.
+`track_buffer` is measured in frames at 30 FPS and is scaled to the input
+video's frame rate. Pass `frame_rate` when tracking individual frames or when
+a video's FPS metadata is invalid.
+
+Each call starts a new sequence by default. For successive individual frames,
+use `persist=True` on every call; call `model.reset_tracker()` when the
+sequence ends. Persistent calls must use the same tracker configuration and
+frame rate. A model instance cannot process concurrent tracking streams.
+Video support is limited to local files with the extensions listed in
+`yolo11/api.py`; camera indices and URLs are not supported.
 
 ## COCO detection data preparation
 
