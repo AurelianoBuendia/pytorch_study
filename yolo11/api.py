@@ -6,9 +6,9 @@ import cv2
 import numpy as np
 import torch
 
-from byte_tracker import BYTETracker, load_config
-from inference import Boxes, _size, predict_image
-from model import load_model
+from .byte_tracker import BYTETracker, load_config
+from .inference import Boxes, _size, predict_image
+from .model import load_model
 
 _VIDEO_SUFFIXES = {".avi", ".m4v", ".mkv", ".mov", ".mp4", ".mpeg", ".mpg", ".webm"}
 
@@ -108,7 +108,7 @@ class YOLO:
         results = generate()
         return results if stream else list(results)
 
-    def export(self, *, format="onnx", imgsz=640, dynamic=False, opset=17, path=None):
+    def export(self, *, format="onnx", imgsz=640, dynamic=False, opset=18, path=None):
         if format != "onnx":
             raise ValueError("only ONNX export is supported")
         height, width = _size(imgsz)

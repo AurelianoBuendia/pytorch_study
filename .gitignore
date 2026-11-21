@@ -147,7 +147,7 @@ cython_debug/
 .pypirc
 
 # Other project files
-*.log
+*.zip
 *.mp4
 *.csv
 *.jpg

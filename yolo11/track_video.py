@@ -5,7 +5,7 @@ from pathlib import Path
 
 import cv2
 
-from api import YOLO
+from .api import YOLO
 
 
 def main():
